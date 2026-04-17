@@ -1,4 +1,3 @@
-// const { optimizedAppearDataId } = require("framer-motion");
 const mongoose=require("mongoose");
 const SChema=mongoose.Schema;
 const userSchema=new SChema({

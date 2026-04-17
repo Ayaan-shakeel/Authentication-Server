@@ -1,11 +1,14 @@
 const express=require("express");
 const mongoose=require("mongoose");
-const cors=require("cors")
+const cors=require("cors");
+const { router } = require("./app/routes/authRoutes");
+
 require("dotenv").config()
 
 const app=express()
 app.use(express.json())
 app.use(cors())
+app.use("/api",router)
 
 mongoose.connect(process.env.MongoURI).then(()=>{
     console.log("Mongo DB is Connected")
