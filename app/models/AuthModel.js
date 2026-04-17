@@ -22,6 +22,7 @@ unique:true
     },
     isVerified:{
         type:Boolean,
+        default:false,
         require:true
     },
     otpString:{
