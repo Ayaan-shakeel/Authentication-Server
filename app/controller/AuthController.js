@@ -29,6 +29,12 @@ const verifyOTP = async (req, res) => {
 
   const user = await authModel.findOne({ email });
 
+
+  console.log("Entered OTP:", otp);
+  console.log("Stored OTP:", user?.otp);
+  console.log("Expiry:", user?.otpExpiry);
+  console.log("Now:", Date.now());
+
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -59,10 +65,28 @@ const login = async (req, res) => {
 
   if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+ const token = jwt.sign(
+  { id: user._id },
+  process.env.JWT_SECRET,
+  { expiresIn: "7d" }
+);
 
   res.json({ token, user });
 };
-module.exports={authInsert,verifyOTP,login}
+
+const resendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await authModel.findOne({ email });
+
+  const otp = generateOTP();
+
+  user.otp = otp;
+  user.otpExpiry = Date.now() + 5 * 60 * 1000;
+
+  await user.save();
+  await sendEmail(email, otp);
+
+  res.json({ message: "OTP resent" });
+};
+module.exports={authInsert,verifyOTP,login,resendOTP}

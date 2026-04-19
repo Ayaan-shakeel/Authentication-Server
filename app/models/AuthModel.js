@@ -14,7 +14,8 @@ unique:true
     phone:{
         type:String,
         require:true,
-        unique:true
+        unique:true,
+        sparse:true
     },
     password:{
         type:String,
@@ -25,11 +26,11 @@ unique:true
         default:false,
         require:true
     },
-    otpString:{
+    otp:{
         type:String,
         require:true
     },
-    otpExpiryDate:{
+    otpExpiry:{
         type:Date
         
     }
