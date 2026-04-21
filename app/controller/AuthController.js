@@ -10,6 +10,8 @@ const authInsert = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const otp = generateOTP();
+  const existingUser = await authModel.findOne({ email });
+
 
   const user = await authModel.create({
     name,
@@ -48,8 +50,16 @@ const verifyOTP = async (req, res) => {
   user.otpExpiry = null;
 
   await user.save();
+ 
+  const token = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
-  res.json({ message: "Email verified successfully" });
+  res.json({ message: "Email verified successfully",
+    token,
+   });
 };
 
 
@@ -60,6 +70,9 @@ const login = async (req, res) => {
   const user = await authModel.findOne({ email });
 
   if (!user) return res.status(404).json({ message: "User not found" });
+  if (!user.isVerified) {
+  return res.status(400).json({ message: "Please verify your email first" });
+}
 
   const isMatch = await bcrypt.compare(password, user.password);
 
