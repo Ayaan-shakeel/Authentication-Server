@@ -33,6 +33,12 @@ unique:true
     otpExpiry:{
         type:Date
         
+    },
+    resetToken:{
+        type:String
+    },
+    resetTokenExpiry:{
+        type:Date
     }
 
 })

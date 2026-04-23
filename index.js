@@ -7,7 +7,12 @@ require("dotenv").config()
 
 const app=express()
 app.use(express.json())
-app.use(cors())
+app.use(cors(
+    {
+  origin: "https://authentication-client-zeta.vercel.app/",
+  credentials: true
+}
+))
 app.use("/api",router)
 
 mongoose.connect(process.env.MongoURI).then(()=>{

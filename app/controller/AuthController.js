@@ -3,6 +3,8 @@ const { generateOTP } = require("../utils/otpGenerator.js");
 const { sendEmail }=require("../utils/sendEmail.js");
 const { authModel } = require("../models/AuthModel.js");
 const jwt=require("jsonwebtoken");
+const crypto = require("crypto");
+
 
 const authInsert = async (req, res) => {
   const { name, email, password } = req.body;
@@ -102,4 +104,50 @@ const resendOTP = async (req, res) => {
 
   res.json({ message: "OTP resent" });
 };
-module.exports={authInsert,verifyOTP,login,resendOTP}
+
+
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await authModel.findOne({ email });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const token = crypto.randomBytes(32).toString("hex");
+
+  user.resetToken = token;
+  user.resetTokenExpiry = Date.now() + 10 * 60 * 1000;
+
+  await user.save();
+
+  const resetLink = `http://localhost:5173/reset-password/${token}`;
+
+  await sendEmail(email, `Reset your password: ${resetLink}`);
+
+  res.json({ message: "Reset link sent to email" });
+};
+
+const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const user = await authModel.findOne({
+    resetToken: token,
+    resetTokenExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: "Invalid or expired token" });
+  }
+
+  user.password = await bcrypt.hash(password, 10);
+  user.resetToken = null;
+  user.resetTokenExpiry = null;
+
+  await user.save();
+
+  res.json({ message: "Password reset successful" });
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword}
