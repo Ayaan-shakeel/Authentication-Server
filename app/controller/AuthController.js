@@ -122,7 +122,7 @@ const forgotPassword = async (req, res) => {
 
   await user.save();
 
-  const resetLink = `http://localhost:5173/reset-password/${token}`;
+ const resetLink = `https://authentication-client-zeta.vercel.app/reset-password/${token}`;
 
   await sendEmail(email, `Reset your password: ${resetLink}`);
 
