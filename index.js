@@ -5,9 +5,9 @@ const { router } = require("./app/routes/authRoutes");
 
 require("dotenv").config();
 
-const app = express(); // ✅ FIRST create app
+const app = express(); 
 
-// ✅ CORS FIX
+
 const allowedOrigins = [
   "http://localhost:5173",
   "https://authentication-client-zeta.vercel.app"
@@ -28,15 +28,14 @@ app.use(
   })
 );
 
-// ✅ VERY IMPORTANT (preflight fix)
 app.options("*", cors());
 
 app.use(express.json());
 
-// ✅ ROUTES
+
 app.use("/api", router);
 
-// ✅ DB CONNECT
+
 mongoose.connect(process.env.MongoURI).then(() => {
   console.log("Mongo DB is Connected");
 
