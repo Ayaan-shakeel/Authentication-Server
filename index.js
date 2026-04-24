@@ -7,7 +7,6 @@ require("dotenv").config();
 
 const app = express(); 
 
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://authentication-client-zeta.vercel.app"
@@ -28,13 +27,8 @@ app.use(
   })
 );
 
-app.options("/*", cors());
-
 app.use(express.json());
-
-
 app.use("/api", router);
-
 
 mongoose.connect(process.env.MongoURI).then(() => {
   console.log("Mongo DB is Connected");
