@@ -1,5 +1,5 @@
 const express=require("express")
-const { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword } = require("../controller/AuthController")
+const { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword, googleLogin } = require("../controller/AuthController")
 const { authMiddleware } = require("../middleware/AuthMiddleware")
 const { authModel } = require("../models/AuthModel")
 
@@ -24,6 +24,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
+router.post("/google-login", googleLogin);
 
 
 module.exports={router}

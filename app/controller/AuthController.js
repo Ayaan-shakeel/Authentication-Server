@@ -150,4 +150,29 @@ const resetPassword = async (req, res) => {
 
   res.json({ message: "Password reset successful" });
 };
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword}
+
+const googleLogin = async (req, res) => {
+  const { name, email, googleId } = req.body;
+
+  let user = await authModel.findOne({ email });
+
+  if (!user) {
+    user = await authModel.create({
+      name,
+      email,
+      googleId,
+      isVerified: true,
+    });
+  }
+
+  const token = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  res.json({ token, user });
+};
+
+
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin}
