@@ -4,6 +4,7 @@ const { sendEmail }=require("../utils/sendEmail.js");
 const { authModel } = require("../models/AuthModel.js");
 const jwt=require("jsonwebtoken");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
 
 
 const authInsert = async (req, res) => {
@@ -150,14 +151,15 @@ const resetPassword = async (req, res) => {
 
   res.json({ message: "Password reset successful" });
 };
-const { OAuth2Client } = require("google-auth-library");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const googleLogin = async (req, res) => {
   try {
     const { credential } = req.body;
-
+if (!credential) {
+      return res.status(400).json({ message: "No credential received" });
+    }
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
