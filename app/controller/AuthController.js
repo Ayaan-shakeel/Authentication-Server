@@ -150,29 +150,46 @@ const resetPassword = async (req, res) => {
 
   res.json({ message: "Password reset successful" });
 };
+const { OAuth2Client } = require("google-auth-library");
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const googleLogin = async (req, res) => {
-  const { name, email, googleId } = req.body;
+  try {
+    const { credential } = req.body;
 
-  let user = await authModel.findOne({ email });
-
-  if (!user) {
-    user = await authModel.create({
-      name,
-      email,
-      googleId,
-      isVerified: true,
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
+
+    const payload = ticket.getPayload();
+
+    const { email, name } = payload;
+
+    let user = await authModel.findOne({ email });
+
+    if (!user) {
+      user = await authModel.create({
+        name,
+        email,
+        password: "google-auth",
+        isVerified: true,
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({ token, user });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Google login failed" });
   }
-
-  const token = jwt.sign(
-    { id: user._id },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  res.json({ token, user });
 };
-
 
 module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin}
