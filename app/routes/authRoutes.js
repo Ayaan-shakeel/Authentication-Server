@@ -26,7 +26,7 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.post("/google-login", googleLogin);
 router.put("/update-profile",authMiddleware, updateProfile);
-router.put("/change-password",authMiddleware, changePassword);
+router.post("/change-password",authMiddleware, changePassword);
 
 
 module.exports={router}
