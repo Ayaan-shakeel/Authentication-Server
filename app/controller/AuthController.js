@@ -193,5 +193,32 @@ if (!credential) {
     res.status(500).json({ message: "Google login failed" });
   }
 };
+const updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
 
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin}
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const user = await authModel.findByIdAndUpdate(
+      req.user.id,
+      { name },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user,
+    });
+
+  } catch (error) {
+    console.log("Update Profile Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile}
