@@ -1,5 +1,5 @@
 const express=require("express")
-const { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword, googleLogin, updateProfile } = require("../controller/AuthController")
+const { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword, googleLogin, updateProfile, changePassword } = require("../controller/AuthController")
 const { authMiddleware } = require("../middleware/AuthMiddleware")
 const { authModel } = require("../models/AuthModel")
 
@@ -26,6 +26,7 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.post("/google-login", googleLogin);
 router.put("/update-profile",authMiddleware, updateProfile);
+router.put("/change-password",authMiddleware, changePassword);
 
 
 module.exports={router}

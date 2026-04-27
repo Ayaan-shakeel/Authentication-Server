@@ -221,4 +221,22 @@ const updateProfile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile}
+
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const { password } = req.body;
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    await authModel.findByIdAndUpdate(userId, {
+      password: hashed,
+    });
+
+    res.json({ message: "Password updated successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Error updating password" });
+  }
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword}
