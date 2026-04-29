@@ -8,25 +8,39 @@ const { OAuth2Client } = require("google-auth-library");
 
 
 const authInsert = async (req, res) => {
-  const { name, email, password } = req.body;
+  try {
+    const { name, email, password } = req.body;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields required" });
+    }
 
-  const otp = generateOTP();
-  const existingUser = await authModel.findOne({ email });
+    const existingUser = await authModel.findOne({ email });
 
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-  const user = await authModel.create({
-    name,
-    email,
-    password: hashedPassword,
-    otp,
-    otpExpiry: Date.now() + 5 * 60 * 1000,
-  });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  await sendEmail(email, otp);
+    const otp = generateOTP();
 
-  res.json({ message: "OTP sent to email" });
+    const user = await authModel.create({
+      name,
+      email,
+      password: hashedPassword,
+      otp,
+      otpExpiry: Date.now() + 5 * 60 * 1000,
+    });
+
+    await sendEmail(email, otp);
+
+    res.json({ message: "OTP sent to email" });
+
+  } catch (err) {
+    console.log("REGISTER ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 const verifyOTP = async (req, res) => {
