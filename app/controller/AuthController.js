@@ -253,4 +253,16 @@ const changePassword = async (req, res) => {
     res.status(500).json({ message: "Error updating password" });
   }
 };
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword}
+
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await authModel.findByIdAndDelete(userId);
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting account" });
+  }
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount}
