@@ -1,8 +1,8 @@
-const bcrypt = require("bcryptjs");
+const bcrypt=require ("bcryptjs");
 const { generateOTP } = require("../utils/otpGenerator.js");
-const { sendEmail } = require("../utils/sendEmail.js");
+const { sendEmail }=require("../utils/sendEmail.js");
 const { authModel } = require("../models/AuthModel.js");
-const jwt = require("jsonwebtoken");
+const jwt=require("jsonwebtoken");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
 const useragent = require("useragent");
@@ -68,17 +68,16 @@ const verifyOTP = async (req, res) => {
   user.otpExpiry = null;
 
   await user.save();
-
+ 
   const token = jwt.sign(
     { id: user._id },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
 
-  res.json({
-    message: "Email verified successfully",
+  res.json({ message: "Email verified successfully",
     token,
-  });
+   });
 };
 
 
@@ -90,28 +89,21 @@ const login = async (req, res) => {
 
   if (!user) return res.status(404).json({ message: "User not found" });
   if (!user.isVerified) {
-    return res.status(400).json({ message: "Please verify your email first" });
-  }
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(400).json({ message: "Wrong password" });
-  const agent = useragent.parse(req.headers["user-agent"]);
-  const device = agent.toString();
-  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-  await sendEmail(
-    email,
-    `New Login Detected:
-Device: ${device}
-IP: ${ip}
-Time: ${new Date().toLocaleString()}`
-  );
+  return res.status(400).json({ message: "Please verify your email first" });
+}
 
-  const token = jwt.sign(
-    { id: user._id },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) return res.status(400).json({ message: "Wrong password" });
+
+ const token = jwt.sign(
+  { id: user._id },
+  process.env.JWT_SECRET,
+  { expiresIn: "7d" }
+);
 
   res.json({ token, user });
+  
 };
 
 const resendOTP = async (req, res) => {
@@ -147,7 +139,7 @@ const forgotPassword = async (req, res) => {
 
   await user.save();
 
-  const resetLink = `https://authentication-client-zeta.vercel.app/reset-password/${token}`;
+ const resetLink = `https://authentication-client-zeta.vercel.app/reset-password/${token}`;
 
   await sendEmail(email, `Reset your password: ${resetLink}`);
 
@@ -181,7 +173,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const googleLogin = async (req, res) => {
   try {
     const { credential } = req.body;
-    if (!credential) {
+if (!credential) {
       return res.status(400).json({ message: "No credential received" });
     }
     const ticket = await client.verifyIdToken({
@@ -248,7 +240,7 @@ const updateProfile = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id; 
     const { password } = req.body;
 
     const hashed = await bcrypt.hash(password, 10);
@@ -276,4 +268,4 @@ const deleteAccount = async (req, res) => {
   }
 };
 
-module.exports = { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword, googleLogin, updateProfile, changePassword, deleteAccount }
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount}
