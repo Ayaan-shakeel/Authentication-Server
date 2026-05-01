@@ -5,7 +5,7 @@ const { authModel } = require("../models/AuthModel.js");
 const jwt=require("jsonwebtoken");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
-const useragent = require("useragent");
+
 
 
 const authInsert = async (req, res) => {
@@ -34,7 +34,11 @@ const authInsert = async (req, res) => {
       otpExpiry: Date.now() + 5 * 60 * 1000,
     });
 
-    await sendEmail(email, otp);
+    await sendEmail(
+  email,
+  "OTP Verification",
+  `Your OTP is ${otp}`
+);
 
     res.json({ message: "OTP sent to email" });
 
@@ -83,29 +87,49 @@ const verifyOTP = async (req, res) => {
 
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await authModel.findOne({ email });
+    const user = await authModel.findOne({ email });
 
-  if (!user) return res.status(404).json({ message: "User not found" });
-  if (!user.isVerified) {
-  return res.status(400).json({ message: "Please verify your email first" });
-}
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  const isMatch = await bcrypt.compare(password, user.password);
+    if (!user.isVerified) {
+      return res.status(400).json({ message: "Please verify your email first" });
+    }
 
-  if (!isMatch) return res.status(400).json({ message: "Wrong password" });
+    const isMatch = await bcrypt.compare(password, user.password);
 
- const token = jwt.sign(
-  { id: user._id },
-  process.env.JWT_SECRET,
-  { expiresIn: "7d" }
-);
+    if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
-  res.json({ token, user });
-  
+    const useragent = require("useragent");
+    const agent = useragent.parse(req.headers["user-agent"]);
+    const device = agent.toString();
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    await sendEmail(
+      email,
+      "New Login Alert - Auth App",
+      `New Login Detected:
+
+Device: ${device}
+IP: ${ip}
+Time: ${new Date().toLocaleString()}`
+    );
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({ token, user });
+
+  } catch (err) {
+    console.log("LOGIN ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
-
 const resendOTP = async (req, res) => {
   const { email } = req.body;
 
@@ -117,7 +141,11 @@ const resendOTP = async (req, res) => {
   user.otpExpiry = Date.now() + 5 * 60 * 1000;
 
   await user.save();
-  await sendEmail(email, otp);
+  await sendEmail(
+  email,
+  "OTP Verification",
+  `Your OTP is ${otp}`
+);
 
   res.json({ message: "OTP resent" });
 };
@@ -141,8 +169,11 @@ const forgotPassword = async (req, res) => {
 
  const resetLink = `https://authentication-client-zeta.vercel.app/reset-password/${token}`;
 
-  await sendEmail(email, `Reset your password: ${resetLink}`);
-
+ await sendEmail(
+  email,
+  "Reset Password Link",
+  `Click here to reset your password:\n\n${resetLink}`
+);
   res.json({ message: "Reset link sent to email" });
 };
 

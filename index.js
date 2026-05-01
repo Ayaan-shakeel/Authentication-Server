@@ -32,6 +32,7 @@ app.use("/api", router);
 
 mongoose.connect(process.env.MongoURI).then(() => {
   console.log("Mongo DB is Connected");
+  console.log(process.env.MongoURI);
 
   app.listen(process.env.PORT || 7000, () => {
     console.log("Server is running");
