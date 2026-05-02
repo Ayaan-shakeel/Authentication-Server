@@ -17,10 +17,30 @@ const authInsert = async (req, res) => {
     }
 
     const existingUser = await authModel.findOne({ email });
+if (existingUser) {
 
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+  if (!existingUser.isVerified) {
+    
+    const otp = generateOTP();
+
+    existingUser.otp = otp;
+    existingUser.otpExpiry = Date.now() + 5 * 60 * 1000;
+
+    await existingUser.save();
+
+    await sendEmail(
+      email,
+      "OTP Verification",
+      `Your OTP is ${otp}`
+    );
+
+    return res.status(200).json({
+      message: "User exists but not verified. OTP resent.",
+    });
+  }
+
+  return res.status(400).json({ message: "User already exists" });
+}
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
