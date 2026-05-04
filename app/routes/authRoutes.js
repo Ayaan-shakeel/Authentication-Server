@@ -28,5 +28,7 @@ router.post("/google-login", googleLogin);
 router.put("/update-profile",authMiddleware, updateProfile);
 router.post("/change-password",authMiddleware, changePassword);
 router.delete("/delete-account",authMiddleware, deleteAccount);
+router.post("/upload-profile", authMiddleware, upload.single("image"), uploadProfilePic);
+router.delete("/delete-profile", authMiddleware, deleteProfilePic);
 
 module.exports={router}

@@ -39,7 +39,11 @@ unique:true
     },
     resetTokenExpiry:{
         type:Date
-    }
+    },
+    profilePic: {
+  type: String,
+  default: "",
+}
 
 })
 const authModel=mongoose.model("authModels",userSchema)

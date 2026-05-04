@@ -318,5 +318,43 @@ const deleteAccount = async (req, res) => {
     res.status(500).json({ message: "Error deleting account" });
   }
 };
+const uploadProfilePic = async (req, res) => {
+  try {
+    const userId = req.user.id;
 
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount}
+    const user = await authModel.findByIdAndUpdate(
+      userId,
+      { profilePic: req.file.path },
+      { new: true }
+    );
+
+    res.json({
+      message: "Profile picture updated",
+      user,
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Upload failed" });
+  }
+};
+const deleteProfilePic = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await authModel.findByIdAndUpdate(
+      userId,
+      { profilePic: "" },
+      { new: true }
+    );
+
+    res.json({
+      message: "Profile picture removed",
+      user,
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed" });
+  }
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic}
