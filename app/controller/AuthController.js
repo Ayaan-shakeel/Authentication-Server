@@ -310,12 +310,36 @@ const changePassword = async (req, res) => {
 const deleteAccount = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { password } = req.body;
+
+    const user = await authModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.password === "google-auth") {
+      return res.status(400).json({
+        message: "Google account cannot use password. Use Google confirmation."
+      });
+    }
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect password" });
+    }
 
     await authModel.findByIdAndDelete(userId);
 
     res.json({ message: "Account deleted successfully" });
+
   } catch (err) {
-    res.status(500).json({ message: "Error deleting account" });
+    console.log("DELETE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 const uploadProfilePic = async (req, res) => {
