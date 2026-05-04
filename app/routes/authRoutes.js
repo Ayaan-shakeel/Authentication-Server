@@ -2,6 +2,7 @@ const express=require("express")
 const { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword, googleLogin, updateProfile, changePassword, deleteAccount, uploadProfilePic, deleteProfilePic } = require("../controller/AuthController")
 const { authMiddleware } = require("../middleware/AuthMiddleware")
 const { authModel } = require("../models/AuthModel")
+const upload = require("../middleware/Upload")
 
 const router=express.Router()
 
