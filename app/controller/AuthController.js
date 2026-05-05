@@ -381,4 +381,28 @@ const deleteProfilePic = async (req, res) => {
     res.status(500).json({ message: "Delete failed" });
   }
 };
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic}
+const deleteGoogleAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await authModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.password !== "google-auth") {
+      return res.status(400).json({
+        message: "Not a Google account",
+      });
+    }
+
+    await authModel.findByIdAndDelete(userId);
+
+    res.json({ message: "Google account deleted successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic,deleteGoogleAccount}
