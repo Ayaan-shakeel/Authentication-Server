@@ -317,20 +317,25 @@ const deleteAccount = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    
     if (user.password === "google-auth") {
       return res.status(400).json({
-        message: "Google account cannot use password. Use Google confirmation."
+        message: "Use Google login to delete account",
       });
     }
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
-    }
 
+
+    if (!password) {
+      return res.status(400).json({
+        message: "Password is required",
+      });
+    }
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Incorrect password" });
+      return res.status(400).json({
+        message: "Incorrect password",
+      });
     }
 
     await authModel.findByIdAndDelete(userId);
