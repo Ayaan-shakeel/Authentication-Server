@@ -317,7 +317,7 @@ const deleteAccount = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     if (user.password === "google-auth") {
       return res.status(400).json({
         message: "Use Google login to delete account",
@@ -386,9 +386,22 @@ const deleteProfilePic = async (req, res) => {
     res.status(500).json({ message: "Delete failed" });
   }
 };
-const deleteGoogleAccount = async (req, res) => {
+const deleteAccountGoogle = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ message: "No credential received" });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const email = payload.email;
 
     const user = await authModel.findById(userId);
 
@@ -396,18 +409,24 @@ const deleteGoogleAccount = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+
+    if (user.email !== email) {
+      return res.status(403).json({ message: "Unauthorized account" });
+    }
+
     if (user.password !== "google-auth") {
       return res.status(400).json({
-        message: "Not a Google account",
+        message: "This account is not a Google account",
       });
     }
 
     await authModel.findByIdAndDelete(userId);
 
-    res.json({ message: "Google account deleted successfully" });
+    res.json({ message: "Account deleted successfully" });
 
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.log("GOOGLE DELETE ERROR:", err);
+    res.status(500).json({ message: "Google delete failed" });
   }
 };
 module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic,deleteGoogleAccount}
