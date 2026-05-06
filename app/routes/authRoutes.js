@@ -1,5 +1,5 @@
 const express=require("express")
-const { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword, googleLogin, updateProfile, changePassword, deleteAccount, uploadProfilePic, deleteProfilePic, deleteGoogleAccount, deleteAccountGoogle } = require("../controller/AuthController")
+const { authInsert, verifyOTP, login, resendOTP, forgotPassword, resetPassword, googleLogin, updateProfile, changePassword, deleteAccount, uploadProfilePic, deleteProfilePic, deleteGoogleAccount, deleteAccountGoogle, getLoginHistory, logoutOthers } = require("../controller/AuthController")
 const { authMiddleware } = require("../middleware/AuthMiddleware")
 const { authModel } = require("../models/AuthModel")
 const upload = require("../middleware/Upload")
@@ -33,5 +33,6 @@ router.post("/upload-profile", authMiddleware, upload.single("image"), uploadPro
 router.delete("/delete-profile", authMiddleware, deleteProfilePic);
 router.delete("/delete-google-account", authMiddleware, deleteGoogleAccount);
 router.delete("/delete-google-account", authMiddleware, deleteAccountGoogle);
-
+router.get("/login-history", authMiddleware, getLoginHistory);
+router.post("/logout-others", authMiddleware, logoutOthers);
 module.exports={router}

@@ -43,7 +43,21 @@ unique:true
     profilePic: {
   type: String,
   default: "",
-}
+},
+loginHistory: [
+  {
+    ip: String,
+    device: String,
+    time: {
+      type: Date,
+      default: Date.now,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+],
 
 })
 const authModel=mongoose.model("authModels",userSchema)

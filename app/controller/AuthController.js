@@ -112,20 +112,41 @@ const login = async (req, res) => {
 
     const user = await authModel.findOne({ email });
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
 
     if (!user.isVerified) {
-      return res.status(400).json({ message: "Please verify your email first" });
+      return res
+        .status(400)
+        .json({ message: "Please verify your email first" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) return res.status(400).json({ message: "Wrong password" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Wrong password" });
+
 
     const useragent = require("useragent");
     const agent = useragent.parse(req.headers["user-agent"]);
     const device = agent.toString();
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    const ip =
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress;
+
+    user.loginHistory.push({
+      device,
+      ip,
+      time: new Date(),
+      isActive: true,
+    });
+
+    if (user.loginHistory.length > 5) {
+      user.loginHistory.shift();
+    }
+
+    await user.save();
 
     await sendEmail(
       email,
@@ -253,8 +274,15 @@ if (!credential) {
       { expiresIn: "7d" }
     );
 
-    res.json({ token, user });
-
+res.json({
+  token,
+  user: {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    isGoogleUser: user.isGoogleUser,
+  },
+});
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Google login failed" });
@@ -453,4 +481,29 @@ const deleteAccountGoogle = async (req, res) => {
     res.status(500).json({ message: "Google delete failed" });
   }
 };
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic,deleteGoogleAccount,deleteAccountGoogle}
+const getLoginHistory = async (req, res) => {
+  try {
+    const user = await authModel.findById(req.user.id);
+
+    res.json(user.loginHistory);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching history" });
+  }
+};
+const logoutOthers = async (req, res) => {
+  try {
+    const user = await authModel.findById(req.user.id);
+
+    user.loginHistory.forEach((session) => {
+      session.isActive = false;
+    });
+
+    await user.save();
+
+    res.json({ message: "Logged out from all devices" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Error logging out" });
+  }
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic,deleteGoogleAccount,deleteAccountGoogle,getLoginHistory,logoutOthers}
