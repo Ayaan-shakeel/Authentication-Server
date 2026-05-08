@@ -127,10 +127,20 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Wrong password" });
 
 
-    const useragent = require("useragent");
-    const agent = useragent.parse(req.headers["user-agent"]);
-    const device = agent.toString();
+    const DeviceDetector = require("device-detector-js");
 
+const detector = new DeviceDetector();
+
+const userAgent = req.headers["user-agent"];
+
+const result = detector.parse(userAgent);
+
+const device = `
+${result.device?.brand || "Unknown"} 
+${result.device?.model || ""}
+- ${result.client?.name || ""}
+on ${result.os?.name || ""}
+`;
     const ip =
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress;
@@ -267,6 +277,33 @@ if (!credential) {
         isVerified: true,
       });
     }
+    const DeviceDetector = require("device-detector-js");
+
+const detector = new DeviceDetector();
+
+const userAgent = req.headers["user-agent"];
+
+const result = detector.parse(userAgent);
+
+const device = `
+${result.device?.brand || "Unknown"} 
+${result.device?.model || ""}
+- ${result.client?.name || ""}
+on ${result.os?.name || ""}
+`;
+
+const ip =
+  req.headers["x-forwarded-for"] ||
+  req.socket.remoteAddress;
+
+user.loginHistory.push({
+  device,
+  ip,
+  time: new Date(),
+  isActive: true,
+});
+
+await user.save();
 
     const token = jwt.sign(
       { id: user._id },
