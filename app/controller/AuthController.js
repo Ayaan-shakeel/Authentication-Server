@@ -5,6 +5,8 @@ const { authModel } = require("../models/AuthModel.js");
 const jwt=require("jsonwebtoken");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
+const DeviceDetector = require("device-detector-js");
+const LoginHistory = require("../models/LoginHistoryModel.js");
 
 
 
@@ -106,82 +108,105 @@ const verifyOTP = async (req, res) => {
 
 
 
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await authModel.findOne({ email });
 
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
-
-    if (!user.isVerified) {
-      return res
-        .status(400)
-        .json({ message: "Please verify your email first" });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    
+    if (!user.isVerified) {
+      return res.status(400).json({
+        message: "Please verify your email first",
+      });
+    }
 
-    if (!isMatch)
-      return res.status(400).json({ message: "Wrong password" });
+    
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Wrong password",
+      });
+    }
 
-    const DeviceDetector = require("device-detector-js");
+    
+    const detector = new DeviceDetector();
 
-const detector = new DeviceDetector();
+    const userAgent = req.headers["user-agent"];
 
-const userAgent = req.headers["user-agent"];
+    const result = detector.parse(userAgent);
 
-const result = detector.parse(userAgent);
-
-const device = `
-${result.device?.brand || "Unknown"} 
+    const device = `
+${result.device?.brand || "Unknown Device"}
 ${result.device?.model || ""}
-- ${result.client?.name || ""}
-on ${result.os?.name || ""}
+- ${result.client?.name || "Unknown Browser"}
+on ${result.os?.name || "Unknown OS"}
 `;
+
     const ip =
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress;
 
-    user.loginHistory.push({
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    const history = await LoginHistory.create({
+      userId: user._id,
       device,
       ip,
-      time: new Date(),
+      token,
       isActive: true,
+      time: new Date(),
     });
 
-    if (user.loginHistory.length > 5) {
-      user.loginHistory.shift();
-    }
+    user.loginHistory.push(history._id);
 
     await user.save();
 
     await sendEmail(
       email,
       "New Login Alert - Auth App",
+
       `New Login Detected:
 
 Device: ${device}
+
 IP: ${ip}
+
 Time: ${new Date().toLocaleString()}`
     );
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({ token, user });
+    res.json({
+      token,
+      user,
+    });
 
   } catch (err) {
+
     console.log("LOGIN ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
   }
-};
-const resendOTP = async (req, res) => {
+};const resendOTP = async (req, res) => {
   const { email } = req.body;
 
   const user = await authModel.findOne({ email });
@@ -277,8 +302,7 @@ if (!credential) {
         isVerified: true,
       });
     }
-    const DeviceDetector = require("device-detector-js");
-
+   
 const detector = new DeviceDetector();
 
 const userAgent = req.headers["user-agent"];
@@ -520,11 +544,19 @@ const deleteAccountGoogle = async (req, res) => {
 };
 const getLoginHistory = async (req, res) => {
   try {
-    const user = await authModel.findById(req.user.id);
 
-    res.json(user.loginHistory);
+    const history = await LoginHistory.find({
+      userId: req.user.id,
+    }).sort({ createdAt: -1 });
+
+    res.json(history);
+
   } catch (err) {
-    res.status(500).json({ message: "Error fetching history" });
+
+    res.status(500).json({
+      message: "Failed",
+    });
+
   }
 };
 const logoutOthers = async (req, res) => {
@@ -543,4 +575,55 @@ const logoutOthers = async (req, res) => {
     res.status(500).json({ message: "Error logging out" });
   }
 };
-module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic,deleteGoogleAccount,deleteAccountGoogle,getLoginHistory,logoutOthers}
+const logout = async (req, res) => {
+  try {
+
+    const token =
+      req.headers.authorization?.split(" ")[1];
+
+    await LoginHistory.findOneAndUpdate(
+      { token },
+      {
+        isActive: false,
+      }
+    );
+
+    res.json({
+      message: "Logged out successfully",
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Logout failed",
+    });
+
+  }
+};
+const logoutParticularDevice = async (req, res) => {
+  try {
+
+    const { historyId } = req.body;
+
+    await LoginHistory.findByIdAndUpdate(
+      historyId,
+      {
+        isActive: false,
+      }
+    );
+
+    res.json({
+      message: "Device logged out",
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: "Failed",
+    });
+
+  }
+};
+module.exports={authInsert,verifyOTP,login,resendOTP,forgotPassword,resetPassword,googleLogin,updateProfile,changePassword,deleteAccount,uploadProfilePic,deleteProfilePic,deleteGoogleAccount,deleteAccountGoogle,getLoginHistory,logoutOthers,logout,logoutParticularDevice}

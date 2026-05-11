@@ -1,64 +1,88 @@
-const mongoose=require("mongoose");
-const SChema=mongoose.Schema;
-const userSchema=new SChema({
-    name:{
-      type:String,
-      require:true,
-    },
-    email:{
-type:String,
-require:true,
-unique:true
+const mongoose = require("mongoose");
 
-    },
-    phone:{
-        type:String,
-        require:true,
-        unique:true,
-        sparse:true
-    },
-    password:{
-        type:String,
-        require:true
-    },
-    isVerified:{
-        type:Boolean,
-        default:false,
-        require:true
-    },
-    otp:{
-        type:String,
-        require:true
-    },
-    otpExpiry:{
-        type:Date
-        
-    },
-    resetToken:{
-        type:String
-    },
-    resetTokenExpiry:{
-        type:Date
-    },
-    profilePic: {
-  type: String,
-  default: "",
-},
-loginHistory: [
+const Schema = mongoose.Schema;
+
+const userSchema = new Schema(
   {
-    ip: String,
-    device: String,
-    time: {
-      type: Date,
-      default: Date.now,
+    name: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-  },
-],
 
-})
-const authModel=mongoose.model("authModels",userSchema)
-module.exports={authModel}
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
+    },
+
+    password: {
+      type: String,
+      default: null,
+    },
+
+    isGoogleUser: {
+      type: Boolean,
+      default: false,
+    },
+
+    googleId: {
+      type: String,
+      default: null,
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    otp: {
+      type: String,
+      default: null,
+    },
+
+    otpExpiry: {
+      type: Date,
+      default: null,
+    },
+
+    resetToken: {
+      type: String,
+      default: null,
+    },
+
+    resetTokenExpiry: {
+      type: Date,
+      default: null,
+    },
+
+    profilePic: {
+      type: String,
+      default: "",
+    },
+
+    // LOGIN HISTORY REFERENCES
+    loginHistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "LoginHistory",
+      },
+    ],
+  },
+
+  {
+    timestamps: true,
+  }
+);
+
+const authModel = mongoose.model("User", userSchema);
+module.exports = { authModel };
