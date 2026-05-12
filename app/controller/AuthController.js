@@ -6,7 +6,8 @@ const jwt=require("jsonwebtoken");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
 const DeviceDetector = require("device-detector-js");
-const LoginHistory = require("../models/LoginHistoryModel.js");
+const { LoginHistory } = require("../models/LoginHistoryModel.js");
+
 
 
 
