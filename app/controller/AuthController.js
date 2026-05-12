@@ -277,13 +277,20 @@ const resetPassword = async (req, res) => {
 };
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const detector = new DeviceDetector();
 
 const googleLogin = async (req, res) => {
   try {
+
     const { credential } = req.body;
-if (!credential) {
-      return res.status(400).json({ message: "No credential received" });
+
+
+    if (!credential) {
+      return res.status(400).json({
+        message: "No credential received",
+      });
     }
+
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -291,44 +298,40 @@ if (!credential) {
 
     const payload = ticket.getPayload();
 
-    const { email, name } = payload;
-
+    const {
+      email,
+      name,
+      picture,
+    } = payload;
     let user = await authModel.findOne({ email });
-
     if (!user) {
+
       user = await authModel.create({
         name,
         email,
         password: "google-auth",
         isVerified: true,
+        profilePic: picture,
+        isGoogleUser: true,
       });
+
     }
-   
-const detector = new DeviceDetector();
 
-const userAgent = req.headers["user-agent"];
+    const userAgent = req.headers["user-agent"];
 
-const result = detector.parse(userAgent);
+    const result = detector.parse(userAgent);
 
-const device = `
+    const device = `
 ${result.device?.brand || "Unknown"} 
 ${result.device?.model || ""}
 - ${result.client?.name || ""}
 on ${result.os?.name || ""}
 `;
 
-const ip =
-  req.headers["x-forwarded-for"] ||
-  req.socket.remoteAddress;
 
-user.loginHistory.push({
-  device,
-  ip,
-  time: new Date(),
-  isActive: true,
-});
-
-await user.save();
+    const ip =
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress;
 
     const token = jwt.sign(
       { id: user._id },
@@ -336,18 +339,36 @@ await user.save();
       { expiresIn: "7d" }
     );
 
-res.json({
-  token,
-  user: {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    isGoogleUser: user.isGoogleUser,
-  },
-});
+   
+    await LoginHistory.create({
+      userId: user._id,
+      device,
+      ip,
+      token,
+      isActive: true,
+      time: new Date(),
+    });
+
+    res.json({
+      token,
+
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profilePic: user.profilePic,
+        isGoogleUser: user.isGoogleUser,
+      },
+    });
+
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Google login failed" });
+
+    console.log("GOOGLE LOGIN ERROR:", err);
+
+    res.status(500).json({
+      message: "Google login failed",
+    });
+
   }
 };
 const updateProfile = async (req, res) => {
