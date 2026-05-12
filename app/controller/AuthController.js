@@ -542,23 +542,28 @@ const deleteAccountGoogle = async (req, res) => {
     res.status(500).json({ message: "Google delete failed" });
   }
 };
+const LoginHistory = require("../models/LoginHistory");
+
 const getLoginHistory = async (req, res) => {
   try {
 
     const history = await LoginHistory.find({
       userId: req.user.id,
-    }).sort({ createdAt: -1 });
+    }).sort({ time: -1 });
 
     res.json(history);
 
   } catch (err) {
 
+    console.log("LOGIN HISTORY ERROR:", err);
+
     res.status(500).json({
-      message: "Failed",
+      message: "Failed to load history",
     });
 
   }
 };
+
 const logoutOthers = async (req, res) => {
   try {
     const user = await authModel.findById(req.user.id);
