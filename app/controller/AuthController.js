@@ -542,8 +542,6 @@ const deleteAccountGoogle = async (req, res) => {
     res.status(500).json({ message: "Google delete failed" });
   }
 };
-const LoginHistory = require("../models/LoginHistory");
-
 const getLoginHistory = async (req, res) => {
   try {
 
