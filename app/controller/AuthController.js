@@ -276,7 +276,9 @@ const resetPassword = async (req, res) => {
   res.json({ message: "Password reset successful" });
 };
 
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 const detector = new DeviceDetector();
 
 const googleLogin = async (req, res) => {
@@ -284,10 +286,9 @@ const googleLogin = async (req, res) => {
 
     const { credential } = req.body;
 
-
     if (!credential) {
       return res.status(400).json({
-        message: "No credential received",
+        message: "Google credential missing",
       });
     }
 
@@ -298,12 +299,22 @@ const googleLogin = async (req, res) => {
 
     const payload = ticket.getPayload();
 
+    if (!payload) {
+      return res.status(400).json({
+        message: "Invalid Google token",
+      });
+    }
+
     const {
       email,
       name,
       picture,
     } = payload;
+
+ 
     let user = await authModel.findOne({ email });
+
+
     if (!user) {
 
       user = await authModel.create({
@@ -317,29 +328,46 @@ const googleLogin = async (req, res) => {
 
     }
 
-    const userAgent = req.headers["user-agent"];
+    if (!user.isGoogleUser) {
+      return res.status(400).json({
+        message:
+          "This email is already registered with password login",
+      });
+    }
+
+    const userAgent = req.headers["user-agent"] || "";
 
     const result = detector.parse(userAgent);
 
     const device = `
-${result.device?.brand || "Unknown"} 
+${result.device?.brand || "Unknown Device"}
 ${result.device?.model || ""}
-- ${result.client?.name || ""}
-on ${result.os?.name || ""}
+- ${result.client?.name || "Unknown Browser"}
+on ${result.os?.name || "Unknown OS"}
 `;
 
-
-    const ip =
+    let ip =
       req.headers["x-forwarded-for"] ||
-      req.socket.remoteAddress;
+      req.socket.remoteAddress ||
+      "Unknown IP";
 
+  
+    if (ip.includes(",")) {
+      ip = ip.split(",")[0];
+    }
+
+ 
     const token = jwt.sign(
-      { id: user._id },
+      {
+        id: user._id,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      {
+        expiresIn: "7d",
+      }
     );
 
-   
+  
     await LoginHistory.create({
       userId: user._id,
       device,
@@ -349,7 +377,8 @@ on ${result.os?.name || ""}
       time: new Date(),
     });
 
-    res.json({
+   
+    res.status(200).json({
       token,
 
       user: {
@@ -363,13 +392,19 @@ on ${result.os?.name || ""}
 
   } catch (err) {
 
-    console.log("GOOGLE LOGIN ERROR:", err);
+    console.log("GOOGLE LOGIN ERROR:");
+    console.log(err);
 
     res.status(500).json({
       message: "Google login failed",
+      error: err.message,
     });
 
   }
+};
+
+module.exports = {
+  googleLogin,
 };
 const updateProfile = async (req, res) => {
   try {
