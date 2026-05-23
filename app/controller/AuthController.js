@@ -130,16 +130,23 @@ const login = async (req, res) => {
     }
 
     
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
+   
+if (user.isGoogleUser) {
+  return res.status(400).json({
+    message: "Use Google Login for this account",
+  });
+}
 
-    if (!isMatch) {
-      return res.status(400).json({
-        message: "Wrong password",
-      });
-    }
+const isMatch = await bcrypt.compare(
+  password,
+  user.password
+);
+
+if (!isMatch) {
+  return res.status(400).json({
+    message: "Wrong password",
+  });
+}
 
     
     const detector = new DeviceDetector();
@@ -314,6 +321,7 @@ const googleLogin = async (req, res) => {
         profilePic: picture,
         isVerified: true,
         isGoogleUser: true,
+        googleId: payload.sub,
       });
 
     }
