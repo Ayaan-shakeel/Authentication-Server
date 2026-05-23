@@ -26,9 +26,11 @@ const userSchema = new Schema(
     },
 
     password: {
-      type: String,
-      default: null,
-    },
+  type: String,
+  required: function () {
+    return !this.isGoogleUser;
+  },
+},
 
     isGoogleUser: {
       type: Boolean,

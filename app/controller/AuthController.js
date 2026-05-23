@@ -282,14 +282,8 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const detector = new DeviceDetector();
 
 const googleLogin = async (req, res) => {
-
   try {
-
-    console.log("1. GOOGLE LOGIN STARTED");
-
     const { credential } = req.body;
-
-    console.log("2. Credential received:", !!credential);
 
     if (!credential) {
       return res.status(400).json({
@@ -297,18 +291,12 @@ const googleLogin = async (req, res) => {
       });
     }
 
-    console.log("3. Verifying token...");
-
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    console.log("4. Token verified");
-
     const payload = ticket.getPayload();
-
-    console.log("5. Payload:", payload);
 
     const {
       email,
@@ -316,26 +304,18 @@ const googleLogin = async (req, res) => {
       picture,
     } = payload;
 
-    console.log("6. Searching user");
-
     let user = await authModel.findOne({ email });
 
-    console.log("7. User found:", !!user);
-
     if (!user) {
-
-      console.log("8. Creating new user");
 
       user = await authModel.create({
         name,
         email,
-        password: "google-auth",
-        isVerified: true,
         profilePic: picture,
+        isVerified: true,
         isGoogleUser: true,
       });
 
-      console.log("9. User created");
     }
 
     const userAgent = req.headers["user-agent"];
@@ -343,7 +323,7 @@ const googleLogin = async (req, res) => {
     const result = detector.parse(userAgent);
 
     const device = `
-${result.device?.brand || "Unknown"} 
+${result.device?.brand || "Unknown"}
 ${result.device?.model || ""}
 - ${result.client?.name || ""}
 on ${result.os?.name || ""}
@@ -353,17 +333,11 @@ on ${result.os?.name || ""}
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress;
 
-    console.log("10. Creating JWT");
-
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-
-    console.log("11. JWT created");
-
-    console.log("12. Saving login history");
 
     await LoginHistory.create({
       userId: user._id,
@@ -373,10 +347,6 @@ on ${result.os?.name || ""}
       isActive: true,
       time: new Date(),
     });
-
-    console.log("13. Login history saved");
-
-    console.log("14. Sending response");
 
     res.json({
       token,
@@ -392,11 +362,7 @@ on ${result.os?.name || ""}
 
   } catch (err) {
 
-    console.log("========== GOOGLE LOGIN ERROR ==========");
-    console.log(err);
-    console.log("MESSAGE:", err.message);
-    console.log("STACK:", err.stack);
-    console.log("=======================================");
+    console.log("GOOGLE LOGIN ERROR:", err);
 
     res.status(500).json({
       message: "Google login failed",
@@ -404,11 +370,11 @@ on ${result.os?.name || ""}
     });
 
   }
-
 };
 
-module.exports = { googleLogin };
-const updateProfile = async (req, res) => {
+module.exports = {
+  googleLogin,
+};const updateProfile = async (req, res) => {
   try {
     const { name } = req.body;
 
