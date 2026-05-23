@@ -379,10 +379,7 @@ on ${result.os?.name || ""}
 
   }
 };
-
-module.exports = {
-  googleLogin,
-};const updateProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
     const { name } = req.body;
 
