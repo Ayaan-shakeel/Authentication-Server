@@ -282,28 +282,33 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const detector = new DeviceDetector();
 
 const googleLogin = async (req, res) => {
+
   try {
+
+    console.log("1. GOOGLE LOGIN STARTED");
 
     const { credential } = req.body;
 
+    console.log("2. Credential received:", !!credential);
+
     if (!credential) {
       return res.status(400).json({
-        message: "Google credential missing",
+        message: "No credential received",
       });
     }
+
+    console.log("3. Verifying token...");
 
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
+    console.log("4. Token verified");
+
     const payload = ticket.getPayload();
 
-    if (!payload) {
-      return res.status(400).json({
-        message: "Invalid Google token",
-      });
-    }
+    console.log("5. Payload:", payload);
 
     const {
       email,
@@ -311,11 +316,15 @@ const googleLogin = async (req, res) => {
       picture,
     } = payload;
 
- 
+    console.log("6. Searching user");
+
     let user = await authModel.findOne({ email });
 
+    console.log("7. User found:", !!user);
 
     if (!user) {
+
+      console.log("8. Creating new user");
 
       user = await authModel.create({
         name,
@@ -326,48 +335,36 @@ const googleLogin = async (req, res) => {
         isGoogleUser: true,
       });
 
+      console.log("9. User created");
     }
 
-    if (!user.isGoogleUser) {
-      return res.status(400).json({
-        message:
-          "This email is already registered with password login",
-      });
-    }
-
-    const userAgent = req.headers["user-agent"] || "";
+    const userAgent = req.headers["user-agent"];
 
     const result = detector.parse(userAgent);
 
     const device = `
-${result.device?.brand || "Unknown Device"}
+${result.device?.brand || "Unknown"} 
 ${result.device?.model || ""}
-- ${result.client?.name || "Unknown Browser"}
-on ${result.os?.name || "Unknown OS"}
+- ${result.client?.name || ""}
+on ${result.os?.name || ""}
 `;
 
-    let ip =
+    const ip =
       req.headers["x-forwarded-for"] ||
-      req.socket.remoteAddress ||
-      "Unknown IP";
+      req.socket.remoteAddress;
 
-  
-    if (ip.includes(",")) {
-      ip = ip.split(",")[0];
-    }
+    console.log("10. Creating JWT");
 
- 
     const token = jwt.sign(
-      {
-        id: user._id,
-      },
+      { id: user._id },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
-  
+    console.log("11. JWT created");
+
+    console.log("12. Saving login history");
+
     await LoginHistory.create({
       userId: user._id,
       device,
@@ -377,8 +374,11 @@ on ${result.os?.name || "Unknown OS"}
       time: new Date(),
     });
 
-   
-    res.status(200).json({
+    console.log("13. Login history saved");
+
+    console.log("14. Sending response");
+
+    res.json({
       token,
 
       user: {
@@ -392,8 +392,11 @@ on ${result.os?.name || "Unknown OS"}
 
   } catch (err) {
 
-    console.log("GOOGLE LOGIN ERROR:");
+    console.log("========== GOOGLE LOGIN ERROR ==========");
     console.log(err);
+    console.log("MESSAGE:", err.message);
+    console.log("STACK:", err.stack);
+    console.log("=======================================");
 
     res.status(500).json({
       message: "Google login failed",
@@ -401,11 +404,10 @@ on ${result.os?.name || "Unknown OS"}
     });
 
   }
+
 };
 
-module.exports = {
-  googleLogin,
-};
+module.exports = { googleLogin };
 const updateProfile = async (req, res) => {
   try {
     const { name } = req.body;
