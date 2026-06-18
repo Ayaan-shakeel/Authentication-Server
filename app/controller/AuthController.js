@@ -315,16 +315,19 @@ const googleLogin = async (req, res) => {
 
     if (!user) {
 
-      user = await authModel.create({
-        name,
-        email,
-        profilePic: picture,
-        isVerified: true,
-        isGoogleUser: true,
-        googleId: payload.sub,
-      });
+  console.log("Creating new Google user...");
 
-    }
+  user = await authModel.create({
+    name,
+    email,
+    profilePic: picture,
+    isVerified: true,
+    isGoogleUser: true,
+    googleId: payload.sub,
+  });
+
+  console.log("Created user:", user);
+}
 
     const userAgent = req.headers["user-agent"];
 
@@ -370,14 +373,16 @@ on ${result.os?.name || ""}
 
   } catch (err) {
 
-    console.log("GOOGLE LOGIN ERROR:", err);
+  console.log("FULL GOOGLE ERROR");
+  console.log(err);
+  console.log(err.stack);
 
-    res.status(500).json({
-      message: "Google login failed",
-      error: err.message,
-    });
+  res.status(500).json({
+    message: "Google login failed",
+    error: err.message,
+  });
 
-  }
+}
 };
 const updateProfile = async (req, res) => {
   try {
