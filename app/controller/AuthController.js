@@ -310,9 +310,11 @@ const googleLogin = async (req, res) => {
       name,
       picture,
     } = payload;
+    console.log("PayLoad",payLoad)
+    console.log("Email",email)
 
     let user = await authModel.findOne({ email });
-
+console.log("Found User",user)
     if (!user) {
 
   console.log("Creating new Google user...");
@@ -374,6 +376,7 @@ on ${result.os?.name || ""}
   } catch (err) {
 
   console.log("FULL GOOGLE ERROR");
+  console.log(err.message)
   console.log(err);
   console.log(err.stack);
 
