@@ -283,7 +283,8 @@ const resetPassword = async (req, res) => {
   res.json({ message: "Password reset successful" });
 };
 
-
+console.log("GOOGLE_CLIENT_ID =", process.env.GOOGLE_CLIENT_ID);
+console.log("JWT_SECRET EXISTS =", !!process.env.JWT_SECRET);
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const detector = new DeviceDetector();
