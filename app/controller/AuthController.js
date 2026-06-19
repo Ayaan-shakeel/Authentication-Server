@@ -218,6 +218,8 @@ Time: ${new Date().toLocaleString()}`
   try {
     const { email } = req.body;
 
+    console.log("RESEND EMAIL:", email);
+
     const user = await authModel.findOne({ email });
 
     if (!user) {
