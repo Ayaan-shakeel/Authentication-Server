@@ -72,11 +72,14 @@ if (existingUser) {
 };
 
 const verifyOTP = async (req, res) => {
+    console.log("BODY:", req.body);
   const { email, otp } = req.body;
+console.log("EMAIL:", email);
+  console.log("OTP:", otp);
 
   const user = await authModel.findOne({ email });
 
-
+ console.log("USER FOUND:", !!user);
   console.log("Entered OTP:", otp);
   console.log("Stored OTP:", user?.otp);
   console.log("Expiry:", user?.otpExpiry);
