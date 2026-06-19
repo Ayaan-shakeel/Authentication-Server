@@ -311,12 +311,13 @@ const googleLogin = async (req, res) => {
       name,
       picture,
     } = payload;
-    console.log("PayLoad",payLoad)
-    console.log("Email",email)
+   console.log("Google payload:", payload);
 
-    let user = await authModel.findOne({ email });
-console.log("Found User",user)
-    if (!user) {
+let user = await authModel.findOne({ email });
+
+console.log("Existing user:", user);
+
+if (!user) {
 
   console.log("Creating new Google user...");
 
@@ -326,12 +327,10 @@ console.log("Found User",user)
     profilePic: picture,
     isVerified: true,
     isGoogleUser: true,
-    googleId: payload.sub,
   });
 
-  console.log("Created user:", user);
+  console.log("User created successfully:", user);
 }
-
     const userAgent = req.headers["user-agent"];
 
     const result = detector.parse(userAgent);
@@ -374,18 +373,18 @@ on ${result.os?.name || ""}
       },
     });
 
-  } catch (err) {
+  }catch (err) {
 
-  console.log("FULL GOOGLE ERROR");
-  console.log(err.message)
-  console.log(err);
-  console.log(err.stack);
+  console.log("==============");
+  console.log("GOOGLE ERROR");
+  console.log("Message:", err.message);
+  console.log("Name:", err.name);
+  console.log("Stack:", err.stack);
+  console.log("==============");
 
   res.status(500).json({
-    message: "Google login failed",
-    error: err.message,
+    message: err.message,
   });
-
 }
 };
 const updateProfile = async (req, res) => {
