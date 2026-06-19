@@ -36,5 +36,6 @@ mongoose.connect(process.env.MongoURI).then(() => {
 
   app.listen(process.env.PORT || 7000, () => {
     console.log("Server is running");
+    console.log("Server Started");
   });
 });
