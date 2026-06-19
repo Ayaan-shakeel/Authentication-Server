@@ -215,25 +215,42 @@ Time: ${new Date().toLocaleString()}`
 
   }
 };const resendOTP = async (req, res) => {
-  const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-  const user = await authModel.findOne({ email });
+    const user = await authModel.findOne({ email });
 
-  const otp = generateOTP();
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
 
-  user.otp = otp;
-  user.otpExpiry = Date.now() + 5 * 60 * 1000;
+    const otp = generateOTP();
 
-  await user.save();
-  await sendEmail(
-  email,
-  "OTP Verification",
-  `Your OTP is ${otp}`
-);
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 5 * 60 * 1000;
 
-  res.json({ message: "OTP resent" });
+    await user.save();
+
+    await sendEmail(
+      email,
+      "OTP Verification",
+      `Your OTP is ${otp}`
+    );
+
+    res.json({
+      message: "OTP resent",
+    });
+
+  } catch (err) {
+    console.log("RESEND OTP ERROR:", err);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
 };
-
 
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
